@@ -1,13 +1,20 @@
 # Pom Pop — Riko Arcade
 
-A phone-friendly, self-contained browser game starring Riko and her sisters. Built as one HTML file with no external dependencies.
+A phone-friendly browser game starring Riko and her sisters. Pom Pop opens straight into the original merge game, with the rest of the arcade available from the menu.
 
 ## Play locally
 
-Open `index.html` in a modern browser. For the closest match to the hosted version, serve this folder with any static web server.
+Open `index.html` in a modern browser, or serve this folder with any static web server. The game has no build step or external dependencies.
+
+## Files
+
+- `index.html` — game screens and page structure
+- `styles.css` — visual design and responsive layouts
+- `app.js` — merge physics, game modes, and arcade features
+- `.nojekyll` — keeps GitHub Pages from processing the game files
 
 ## Publish with GitHub Pages
 
-This repository is designed for GitHub Pages. In the repository settings, choose **Pages**, then publish the `main` branch from the root folder. GitHub will provide the game URL after the first deployment completes.
+The repository publishes the `main` branch from the root folder. Changes pushed to `main` are deployed automatically by GitHub Pages.
 
-Progress and settings are saved in the browser's local storage on the device that plays the game. They do not sync between devices.
+Scores, challenges, and arcade items are saved in the browser's local storage on the device that plays. They do not sync between devices.
