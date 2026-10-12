@@ -1,10 +1,14 @@
 const C=document.getElementById('canvas'), ctx=C.getContext('2d');
 let W=600,H=760,dpr=1;
+const isPhone=()=>W<=900;
+const launchY=()=>isPhone()?116:72;
+const dangerY=()=>isPhone()?190:132;
 function resize(){
   const r=C.getBoundingClientRect(); dpr=Math.min(2,devicePixelRatio||1);
   W=r.width;H=r.height;C.width=W*dpr;C.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);
 }
 addEventListener('resize',resize); resize();
+window.visualViewport?.addEventListener('resize',resize);
 
 const coats=[
   {name:'Cream', c:'#fff0dc', ear:'#e9c7b4', face:'#5c3b38'},
@@ -313,18 +317,20 @@ function drawPom(c,x,y,r,type,scale=1){
   const safeType=Number.isFinite(type)?Math.max(0,Math.min(coats.length-1,Math.floor(type))):0;
   const p=coats[safeType], rr=r*scale;
   c.save();c.translate(x,y);
-  // Round, extra-fluffy Pomeranian silhouette inspired by the reference Pom.
+  // Soft scalloped silhouette, warm shading and fine tufts give each Pom a plush coat.
   c.shadowColor='#0b0b18';c.shadowBlur=rr*.24;c.shadowOffsetY=rr*.10;
   c.fillStyle=p.c;c.beginPath();
-  const n=56;
-  for(let i=0;i<n;i++){
-    const a=i/n*Math.PI*2;
-    const wob=1+.055*Math.sin(i*4.7)+.022*Math.sin(i*10.9)+.012*Math.sin(i*17.3);
-    const q=rr*wob;
-    const xx=Math.cos(a)*q, yy=Math.sin(a)*q;
+  const lobes=18, steps=lobes*4;
+  for(let i=0;i<steps;i++){
+    const a=i/steps*Math.PI*2;
+    const wob=1+.032*Math.cos(a*lobes)+.012*Math.sin(a*lobes*2);
+    const q=rr*wob, xx=Math.cos(a)*q, yy=Math.sin(a)*q;
     if(i===0)c.moveTo(xx,yy);else c.lineTo(xx,yy);
   }
   c.closePath();c.fill();c.shadowBlur=0;c.shadowOffsetY=0;
+  const coat=c.createRadialGradient(-rr*.32,-rr*.42,rr*.08,0,0,rr*1.18);
+  coat.addColorStop(0,'#ffffff38');coat.addColorStop(.55,'#ffffff08');coat.addColorStop(1,'#17132635');
+  c.fillStyle=coat;c.fill();
 
   // The black/tan/cream markings are the signature look of the Pom in the photo.
   if(p.tux){
@@ -347,6 +353,12 @@ function drawPom(c,x,y,r,type,scale=1){
     c.beginPath();c.ellipse(0,rr*.48,rr*.40,rr*.46,0,0,Math.PI*2);c.fill();c.globalAlpha=1;
   }
 
+  // Fine short fur strokes along the outside edge.
+  c.save();c.globalAlpha=.18;c.strokeStyle=safeType===4?'#f0d2b0':'#fff8e9';c.lineWidth=Math.max(.7,rr*.018);c.lineCap='round';
+  for(let i=0;i<28;i++){
+    const a=(i+.5)/28*Math.PI*2, co=Math.cos(a), si=Math.sin(a);
+    c.beginPath();c.moveTo(co*rr*.91,si*rr*.91);c.lineTo(co*rr*1.015,si*rr*1.015);c.stroke();
+  }c.restore();
   // Tiny tucked ears, still inside the circular silhouette.
   c.fillStyle=p.ear;c.beginPath();c.ellipse(-rr*.39,-rr*.49,rr*.17,rr*.24,-.25,0,Math.PI*2);c.fill();
   c.beginPath();c.ellipse(rr*.39,-rr*.49,rr*.17,rr*.24,.25,0,Math.PI*2);c.fill();
@@ -480,9 +492,9 @@ function showControls(){
 }
 function spawnAt(x, targetY){
   if(gameOver||dropCooldown>0)return;
-  const sx=W/2, sy=72;
+  const sx=W/2, sy=launchY();
   x=Math.max(25,Math.min(W-25,x));
-  targetY=Math.max(150,Math.min(H-120,targetY ?? H*.58));
+  targetY=Math.max(dangerY()+28,Math.min(H-120,targetY ?? H*.58));
   const dx=x-sx, dy=targetY-sy, len=Math.max(1,Math.hypot(dx,dy)), speed=520;
   if(next.kind==='rainbow'){
     const shot={x:sx,y:sy,r:25,vx:dx/len*speed,vy:dy/len*speed,kind:'rainbow',dead:false,hits:new Set(),settle:0};
@@ -511,7 +523,7 @@ let dragging=false;
 function pointer(e){
   const r=C.getBoundingClientRect();
   aimX=Math.max(25,Math.min(W-25,e.clientX-r.left));
-  aimY=Math.max(145,Math.min(H-90,e.clientY-r.top));
+  aimY=Math.max(dangerY()+12,Math.min(H-90,e.clientY-r.top));
 }
 C.addEventListener('pointerdown',e=>{
   if(gameOver)return;
@@ -764,7 +776,7 @@ function physics(dt){ if(menuOpen||gameOver||winning)return;
   balls=balls.filter(b=>!b.dead);
   for(const p of particles){p.x+=p.vx;p.y+=p.vy;p.vy+=100*dt;p.life-=dt*1.6}
   particles=particles.filter(p=>p.life>0);
-  if(balls.some(b=>b.y-b.r<132 && Math.abs(b.vy)<120 && b.settle>.18)){endGame()}
+  if(balls.some(b=>b.y-b.r<dangerY() && Math.abs(b.vy)<120 && b.settle>.18)){endGame()}
   if(score>best){best=score;localStorage.pomBest=best} checkChallenge(); if(document.getElementById('comboText')){document.getElementById('comboText').textContent='x'+combo;document.getElementById('comboSub').textContent=combo>1?'FLOOF COMBO!':'Nice Shot!';}
 }
 function draw(){
@@ -772,10 +784,10 @@ function draw(){
   ctx.clearRect(0,0,W,H);
   const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,th.bg[0]);g.addColorStop(.55,th.bg[1]);g.addColorStop(1,th.bg[2]);ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
   // Themed room shapes: window glow, shelves, plants and wallpaper.
-  ctx.globalAlpha=.10;ctx.fillStyle=th.glow;ctx.beginPath();ctx.roundRect(W*.70,18,W*.24,H*.25,22);ctx.fill();
+  ctx.globalAlpha=isPhone()?.07:.10;ctx.fillStyle=th.glow;ctx.beginPath();ctx.roundRect(W*.70,launchY()-8,W*.24,isPhone()?Math.min(210,H*.18):H*.25,22);ctx.fill();
   ctx.fillStyle=th.shelf;for(let i=0;i<8;i++){ctx.beginPath();ctx.arc(25+i*86,95+(i%4)*145,18+(i%2)*10,0,7);ctx.fill()}
   ctx.globalAlpha=.08;ctx.fillStyle='#efe7ff';ctx.fillRect(18,H*.30,W-36,2);ctx.fillRect(18,H*.60,W-36,2);ctx.globalAlpha=1;
-  ctx.setLineDash([17,14]);ctx.strokeStyle=th.line;ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(12,132);ctx.lineTo(W-12,132);ctx.stroke();ctx.setLineDash([]);
+  ctx.setLineDash([17,14]);ctx.strokeStyle=th.line;ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(12,dangerY());ctx.lineTo(W-12,dangerY());ctx.stroke();ctx.setLineDash([]);
   ctx.globalAlpha=.11;ctx.fillStyle=th.wallpaper;for(let i=0;i<9;i++){let px=35+(i*91)%(Math.max(80,W-70)),py=175+(i*83)%(Math.max(100,H-240));ctx.beginPath();ctx.arc(px,py,5,0,7);ctx.fill();ctx.beginPath();ctx.arc(px-9,py-7,3,0,7);ctx.fill();ctx.beginPath();ctx.arc(px+9,py-7,3,0,7);ctx.fill()}ctx.globalAlpha=1;
   for(const dz of curLevel.deadzones){
     const dx=dz.xf*W, dw=dz.wf*W, y0=dz.yf?dz.yf*H:H-46, h=46;
@@ -794,19 +806,19 @@ function draw(){
   // aim line
   if(!gameOver && dropCooldown<=0){
     ctx.globalAlpha=.48;ctx.fillStyle='#eee9dc';
-    const sx=W/2, sy=72, ax=aimX||W/2, ay=aimY||H*.58;
+    const sx=W/2, sy=launchY(), ax=aimX||W/2, ay=aimY||H*.58;
     const dx=ax-sx,dy=ay-sy,len=Math.max(1,Math.hypot(dx,dy)),ux=dx/len,uy=dy/len;
     for(let d=45;d<Math.min(len,520);d+=24){ctx.beginPath();ctx.arc(sx+ux*d,sy+uy*d,3.2,0,7);ctx.fill()}
     ctx.globalAlpha=1;
   }
   for(const b of balls){ if(b.kind==='rainbow'){drawRainbow(ctx,b.x,b.y,b.r);} else if(['wildcard','bomb','magnet','freeze','blessing'].includes(b.kind)){drawSpecial(ctx,b.x,b.y,b.r,b.kind==='wildcard'?'🃏':b.kind==='bomb'?'💣':b.kind==='magnet'?'🧲':b.kind==='freeze'?'❄️':'💖',b.kind.toUpperCase());} else if(b.kind==='power'){drawPowerShot(ctx,b.x,b.y,b.r,b.power);} else if(b.kind==='sister'){drawSister(ctx,b.x,b.y,b.r,b.sister);ctx.save();ctx.strokeStyle='#ff5b6e';ctx.lineWidth=2.4;ctx.setLineDash([4,4]);ctx.beginPath();ctx.arc(b.x,b.y,b.r+4,0,7);ctx.stroke();ctx.restore();} else if(b.kind==='hazard'){drawHazard(ctx,b.x,b.y,b.r,b.hazard);if(!b.triggered){ctx.save();ctx.strokeStyle='#ffce54';ctx.lineWidth=2.4;ctx.setLineDash([4,4]);ctx.beginPath();ctx.arc(b.x,b.y,b.r+4,0,7);ctx.stroke();ctx.restore();}} else {drawPom(ctx,b.x,b.y,b.r,b.ultimate?4:b.type);} if(b.wild){ctx.save();ctx.strokeStyle='#f6c6ff';ctx.lineWidth=3;ctx.setLineDash([5,5]);ctx.beginPath();ctx.arc(b.x,b.y,b.r+5,0,7);ctx.stroke();ctx.restore();}}
   for(const p of particles){ctx.globalAlpha=p.life;ctx.font='20px serif';ctx.textAlign='center';ctx.fillText(p.char,p.x,p.y)}ctx.globalAlpha=1;
-  const lx=W/2,ly=78;
+  const lx=W/2,ly=launchY();
   ctx.fillStyle='#111126';ctx.strokeStyle='#e9ae4b';ctx.lineWidth=3;ctx.beginPath();ctx.roundRect(lx-43,ly-31,86,68,20);ctx.fill();ctx.stroke();
   ctx.fillStyle='#292747';ctx.beginPath();ctx.arc(lx,ly+8,29,Math.PI,0);ctx.fill();
   ctx.fillStyle='#d9973d';ctx.beginPath();ctx.arc(lx-34,ly+18,4,0,7);ctx.fill();ctx.beginPath();ctx.arc(lx+34,ly+18,4,0,7);ctx.fill();
   drawNextShot(ctx,lx,ly+2,next);
-  ctx.font='900 9px system-ui';ctx.textAlign='center';ctx.fillStyle='#d7d0e4';ctx.fillText(dragging?'RELEASE TO SHOOT':'DRAG TO AIM • RELEASE',lx,ly-39);
+  if(!isPhone()){ctx.font='900 9px system-ui';ctx.textAlign='center';ctx.fillStyle='#d7d0e4';ctx.fillText(dragging?'RELEASE TO SHOOT':'DRAG TO AIM • RELEASE',lx,ly-39);}
 }
 
 
