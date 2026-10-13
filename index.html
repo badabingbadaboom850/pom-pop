@@ -2,9 +2,10 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
-<title>POM MERGE — Shoot • Match • Grow</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<title>Pom Pop · Riko Arcade</title>
 <link rel="stylesheet" href="./styles.css">
+<link rel="stylesheet" href="./presentation.css">
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute"><defs>
@@ -51,8 +52,8 @@
   </div>
 </div>
 <div id="challengePanel"><div class="challengeBox"><h2>🎯 PICK A CHALLENGE</h2><div class="small">Complete the mission in one run. Progress is saved!</div><div class="challengeList" id="challengeList"></div><button class="closeBtn" id="closeChallenges">BACK TO ARCADE</button></div></div>
-<div class="mobileHud" id="mobileHud">
-  <button id="mobileMenuBtn" aria-label="Open menu">☰</button>
+<div class="mobileHud" id="mobileHud" hidden>
+  <button id="legacyMenuBtn" aria-label="Open menu">☰</button>
   <div class="mobileScore"><div><small>SCORE</small><span id="mobileScoreText">0</span></div><span>•</span><div><small>LV</small><span id="mobileLevelText">1</span></div></div>
   <div class="mobileNext" id="mobileNext"><canvas width="60" height="48"></canvas></div>
 </div>
@@ -81,7 +82,7 @@
     <div class="closetSub">Mix • Match • Make Riko FABULOUS ✨</div>
     <div class="closetCoins">💰 FLOOF COINS: <span id="closetCoins">0</span></div>
     <div class="closetLayout">
-      <div class="dressupStage"><div class="dressupCharacter"><div class="dressupHair"></div><div class="dressupHead"><span class="dressupEye left"></span><span class="dressupEye right"></span><span class="dressupMouth">⌣</span></div><div class="dressupBody"></div><div class="dressupOutfit" id="dressupOutfit"></div><div class="dressupHat" id="dressupHat"></div><div class="dressupAccessory" id="dressupAccessory"></div></div></div>
+      <div class="dressupStage"><div class="dressupCharacter"><canvas id="closetRiko" width="300" height="320"></canvas><div class="dressupOutfit" id="dressupOutfit"></div><div class="dressupHat" id="dressupHat"></div><div class="dressupAccessory" id="dressupAccessory"></div></div></div>
       <div><div class="label" style="text-align:left;margin-bottom:8px">OUTFITS</div><div class="closetItems" id="closetOutfits"></div><div class="label" style="text-align:left;margin:15px 0 8px">HATS & ACCESSORIES</div><div class="closetItems" id="closetAccessories"></div></div>
     </div>
   </div>
@@ -106,74 +107,24 @@
     <div class="matchActions"><button class="matchSecondary" id="matchShuffle">SHUFFLE 🔀</button><button id="matchRestart">NEW BOARD ✨</button></div>
   </div>
 </div>
-<div id="game">
-  <div class="side">
-    <div class="card">
-      <div class="logo">POM<br><span>MERGE</span></div>
-      <div class="tag"><svg class="icon iconFill"><use href="#paw"/></svg> Shoot • Match • Grow • FLOOF!<br><b id="modeTag">CLASSIC MODE</b></div>
-    </div>
-    <div class="card">
-      <div class="label">SCORE</div><div id="score" class="score">0</div>
-    </div>
-    <div class="card">
-      <div class="label">BEST</div><div id="best" class="best">0</div>
-    </div>
-    <div class="card">
-      <div class="label"><svg class="icon"><use href="#spark"/></svg>MERGES</div><div id="merges" class="best">0</div>
-    </div>
-    <div class="card">
-      <div class="label">LEVEL</div><div id="levelNum" class="best">1</div>
-    </div>
-    <div class="card">
-      <div class="label" id="nextLabel">NEXT POM</div>
-      <div id="nextBox" class="nextBox"></div>
-    </div>
-    <div class="card help"><svg class="icon"><use href="#hand"/></svg> Drag to Aim<br><svg class="icon"><use href="#paw"/></svg> Release to Shoot<br><svg class="icon"><use href="#spark"/></svg> Same coat = Merge!<br>🌈 Rainbow Pom = +1 size to every Pom it touches!<br>🃏 Wild Pom = matches anything!<br>💣 Bomb Pom = blasts nearby Poms!<br>🧲 Magnet = pulls Poms together!<br>❄️ Freeze = stops Rush shrinking!<br>😼🌭 Watch for the Sisters!</div>
-    <div class="card"><div class="label"><svg class="icon"><use href="#paw"/></svg>POWER SHOTS</div><div class="powerGrid">
-      <button class="power" id="powerBall" title="Tennis Ball — bounce the nearby Poms"><svg class="icon"><use href="#ball"/></svg><b>TENNIS BALL</b><small>Bounce!</small></button>
-      <button class="power" id="powerLeash" title="New Leash — pull the biggest Pom toward the center"><svg class="icon"><use href="#leash"/></svg><b>NEW LEASH</b><small>Reel in!</small></button>
-      <button class="power" id="powerCup" title="Pup Cup — slow the Poms for 5 seconds"><svg class="icon"><use href="#cup"/></svg><b>PUP CUP ☕</b><small>Slow time</small></button>
-      <button class="power" id="powerGlam" title="Glamour — make the next Pom a rainbow wildcard"><svg class="icon"><use href="#glam"/></svg><b>GLAMOUR</b><small>Wild next</small></button>
-    </div><div class="powerNote">Power shots can randomly replace your next Pom. Touch a Pom to trigger their effect!</div></div>
-    <button id="restart">START / RESTART</button><button id="rushMode">POM RUSH ⚡</button><button id="arcadeBack">RIKO ARCADE 🏠</button>
-  </div>
-
-  <div id="boardWrap">
-    <canvas id="canvas"></canvas><div class="bottomControls"><span>DRAG</span><div class="round">🐾</div><span>RELEASE</span></div>
-    <button class="mobilePowerToggle" id="mobilePowerToggle">🐾</button><button id="mobileRush">RUSH ⚡</button>
-    <div class="mobilePowers" id="mobilePowers">
-      <button class="mPower" id="mBall" title="Tennis Ball">🎾</button>
-      <button class="mPower" id="mLeash" title="New Leash">🦮</button>
-      <button class="mPower" id="mCup" title="Pup Cup">☕</button>
-      <button class="mPower" id="mGlam" title="Glamour">✨</button>
-    </div>
-    <div id="toast">BIG FLOOF! ✨</div><div class="mobileHint"><svg class="icon"><use href="#hand"/></svg> Drag anywhere to aim • Release to shoot</div>
-    <div id="gameover"><div class="modal" id="resultModal">
+<main id="game" class="gameShell" aria-label="Pom Pop game">
+<header class="gameHeader"><button class="iconButton" id="mobileMenuBtn" aria-label="Pause and open arcade menu"><svg class="icon"><use href="#paw"/></svg></button><div class="gameBrand">POM <span>POP</span><small>RIKO & THE SISTERS</small></div><div class="headerActions"><button class="iconButton" id="soundToggle" aria-label="Enable sound" title="Sound">♫</button><button class="iconButton" id="helpToggle" aria-label="How to play">?</button></div></header>
+<section class="scoreRibbon" aria-label="Game stats"><div class="scoreTile"><small>SCORE</small><strong id="score">0</strong></div><div class="scoreTile comboTile"><small>COMBO</small><strong id="comboText">×1</strong><span id="comboSub">Nice shot!</span></div><div class="scoreTile"><small>PERSONAL BEST</small><strong id="best">0</strong></div></section>
+<section class="levelRibbon"><span class="levelBadge">LV <b id="levelNum">1</b></span><span id="roomName">Cozy Living Room</span><span class="modeChip" id="modeTag">CLASSIC</span></section>
+<aside class="gameAside leftAside"><div class="insetPanel nextPanel"><div class="label" id="nextLabel">NEXT POM</div><div id="nextBox" class="nextBox"></div><small id="shotName">Tiny Pom</small></div><div class="insetPanel sistersPanel"><div class="label">THE CHAOS CREW</div><canvas id="sistersPortrait" width="280" height="150"></canvas><b>Penny & Bijuu</b><p>Two sisters.<br>A little mischief.</p></div><div class="cozySign">GOOD DOGS<br>MAKE LIFE<br><b>BETTER</b><span>♥</span></div></aside>
+<section id="boardWrap" class="playfield"><canvas id="canvas" aria-label="Drag to aim and release to shoot a Pom"></canvas><div class="boardCaption">✦ MAKE ROOM FOR MORE FLOOF ✦</div><div id="toast" role="status">BIG FLOOF!</div><div id="gameover"><div class="modal" id="resultModal">
       <div class="winCrown" id="resultCrown">🐾</div>
       <div class="winPom"><canvas id="winPomCanvas" width="150" height="120"></canvas></div>
       <h2 id="resultTitle">Too Much FLOOF!</h2><div class="winText" id="winText" style="display:none">YOU DID IT! YOU UNLOCKED MEGA RIKO! 👑</div>
       <div class="small">Score: <b id="final">0</b></div>
       <button id="nextLevel" style="display:none;margin-bottom:8px">NEXT LEVEL ▶🐾</button>
       <button id="again">TRY AGAIN 🐾</button>
-    </div></div>
-  </div>
-
-  <div class="side">
-    <div class="card">
-      <div class="sizeTitle"><svg class="icon iconFill"><use href="#paw"/></svg> SIZE GUIDE</div>
-      <div id="ladder"></div>
-    </div>
-    <div class="card">
-      <div class="sizeTitle" style="color:#ff8fa0">⚠ CHAOS SISTERS</div>
-      <div class="tag">😼 <b>Bijuu</b> breaks your combo &amp; scatters nearby Poms.<br>🌭 <b>Penny</b> knocks Poms out of place.<br>Match two of the same sister to clear them, or hit either with 🦮 New Leash to walk her out for a big bonus!</div>
-    </div>
-    <div class="card">
-      <div class="sizeTitle" style="color:#ffce54">⚠ CHAOS HAZARDS</div>
-      <div class="tag">🚿 <b>Shower Time</b> washes away every Pom it touches on the way down.<br>💉 <b>Vet Visit</b> shrinks every Pom it touches a size.<br>🧹 <b>Vacuum Day</b> sucks up whatever it touches as it falls.<br>Hit one with a power shot before it lands to defuse it completely!</div>
-    </div>
-  </div>
-</div>
-
+    </div></div></section>
+<aside class="gameAside rightAside"><div class="insetPanel guidePanel"><div class="label">FLOOF EVOLUTION</div><div id="ladder"></div></div><div class="miniRecord"><span>MERGES THIS RUN</span><b id="merges">0</b></div></aside>
+<footer class="gameDock"><div class="dockHint" id="aimHint">Drag to aim <span>·</span> Release to shoot</div><div class="toyDock" aria-label="Choose a power shot"><button class="toyButton" id="powerBall" title="Tennis Ball: bounce Poms"><svg class="icon"><use href="#ball"/></svg><span>TENNIS BALL</span></button><button class="toyButton" id="powerLeash" title="New Leash: pull a Pom or walk a sister out"><svg class="icon"><use href="#leash"/></svg><span>NEW LEASH</span></button><button class="toyButton" id="powerCup" title="Pup Cup: slow time"><svg class="icon"><use href="#cup"/></svg><span>PUP CUP</span></button><button class="toyButton" id="powerGlam" title="Glamour: make a wildcard"><svg class="icon"><use href="#glam"/></svg><span>GLAMOUR</span></button></div><span id="eventTag" class="eventTag"></span></footer>
+<div class="legacyControls" hidden><button id="restart"></button><button id="rushMode"></button><button id="arcadeBack"></button><button id="mobileRush"></button><button id="mobilePowerToggle"></button><div id="mobilePowers"><button id="mBall"></button><button id="mLeash"></button><button id="mCup"></button><button id="mGlam"></button></div></div></main>
+<div class="guideOverlay" id="playGuide" hidden><div class="guideSheet"><button id="helpClose" class="iconButton guideClose" aria-label="Close instructions">×</button><div class="guideKicker">A LITTLE FLOOF GOES A LONG WAY</div><h2>Ready, aim…<br><span>Pom!</span></h2><canvas id="guidePom" width="260" height="120"></canvas><p>Drag anywhere on the board to aim.<br>Release to shoot. Match equal sizes to grow.</p><div class="guideRules"><span>👑 Grow the biggest Pom into Mega Riko.</span><span>🎾 Tap a toy to choose your next shot.</span><span>😼 Match two sisters, or walk one out with a leash.</span><span>⚠ Keep the pile below the pink line.</span></div><button id="helpPlay">LET'S MAKE SOME FLOOF</button></div></div>
+<script src="./presentation.js"></script>
 <script src="./app.js"></script>
 </body>
 </html>
